@@ -1,0 +1,107 @@
+/* App.css */
+html, body {
+  height: 100%; /* Ensure the viewport calculation basis is correct */
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent body scrollbars if App fits viewport */
+}
+
+.App {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  height: 100vh; /* Use full viewport height */
+  padding: 20px;
+  box-sizing: border-box; /* Include padding in height calculation */
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0; /* Prevent controls from shrinking */
+}
+
+.status-bar {
+  margin-left: 20px;
+  font-weight: bold;
+  color: #444;
+  white-space: nowrap; /* Prevent status text wrapping causing height changes */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.graphs-container {
+  flex: 1 1 auto; /* Grow and shrink to take available space */
+  min-height: 0; /* Important for flex children inside fixed height containers */
+  margin-top: 20px;
+  display: flex; /* Make it a flex container for its children */
+  flex-direction: column; /* Stack chart wrappers vertically */
+}
+
+.graph-container {
+  flex: 1 1 auto; /* Allow graph container to take space within graphs-container */
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Reduced gap slightly */
+  overflow-y: auto; /* Add scroll if charts exceed space (unlikely with flex: 1 on wrappers) */
+  min-height: 0; /* Needed for nested flex containers */
+}
+
+.chart-wrapper {
+  flex: 1 1 auto; /* Allow each chart to grow/shrink evenly */
+  min-height: 250px; /* Minimum sensible height for a chart */
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-wrapper h3 {
+  margin-bottom: 5px; /* Reduce space above chart */
+  flex-shrink: 0;
+}
+
+.chart {
+  flex: 1 1 auto; /* Make chart fill the wrapper's space */
+  width: 100%;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  min-height: 200px; /* Absolute minimum chart render height */
+}
+
+.no-data-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #999;
+  font-style: italic;
+  background-color: #f9f9f9;
+}
+
+.raw-log {
+  margin-top: 20px;
+  flex-shrink: 0; /* Prevent log area from shrinking */
+  display: flex; /* Use flex to control children */
+  flex-direction: column;
+}
+
+.raw-log h3 {
+   margin-bottom: 5px;
+}
+
+.log-container {
+  max-height: 150px; /* Slightly reduced max-height, adjust as needed */
+  overflow-y: auto; /* CRITICAL: Makes the log scroll internally */
+  background: #f5f5f5;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  flex-shrink: 0; /* Ensure it doesn't shrink below max-height */
+}
+
+.log-line {
+  font-family: monospace;
+  font-size: 0.9em; /* Slightly smaller font */
+  color: #444;
+  white-space: nowrap; /* Prevent wrapping */
+}
+
