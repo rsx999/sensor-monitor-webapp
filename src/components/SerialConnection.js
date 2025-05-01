@@ -3,50 +3,78 @@ import React, { useState, useEffect } from 'react';
 const SerialConnection = ({ onData, onLog }) => {
   const [port, setPort] = useState(null);
   const [reader, setReader] = useState(null);
+  const [readableStreamClosed, setReadableStreamClosed] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [abortController, setAbortController] = useState(null);
 
   useEffect(() => {
-    return () => { disconnect(); };
+    return () => {
+      disconnect();
+    };
   }, []);
 
   const connect = async () => {
     try {
       const newPort = await navigator.serial.requestPort();
       await newPort.open({ baudRate: 9600 });
+
       const textDecoder = new TextDecoderStream();
       const readableStreamClosed = newPort.readable.pipeTo(textDecoder.writable);
       const newReader = textDecoder.readable.getReader();
 
+      const abort = new AbortController();
+
       setPort(newPort);
       setReader(newReader);
+      setReadableStreamClosed(readableStreamClosed);
+      setAbortController(abort);
       setIsConnected(true);
       onLog('✅ Serial port connected.');
-      readLoop(newReader);
+
+      readLoop(newReader, abort.signal);
     } catch (err) {
       onLog(`❌ Connection error: ${err.message}`);
     }
   };
 
   const disconnect = async () => {
+    onLog('⚠️ Disconnecting...');
     try {
       if (reader) {
         await reader.cancel();
         await reader.releaseLock();
       }
-      if (port) await port.close();
-      setPort(null);
+
+      if (readableStreamClosed) {
+        await readableStreamClosed.catch(() => {
+          // Ignore the error from canceling the stream
+        });
+      }
+
+      if (port) {
+        await port.close();
+      }
+
       setReader(null);
+      setPort(null);
+      setReadableStreamClosed(null);
+      setAbortController(null);
       setIsConnected(false);
       onLog('🔌 Disconnected.');
     } catch (err) {
-      onLog(`❌ Disconnection error: ${err.message}`);
+      onLog(`❌ Disconnect failed: ${err.message}`);
     }
   };
 
-  const readLoop = async (reader) => {
+  const readLoop = async (reader, signal) => {
     let buffer = '';
     try {
       while (true) {
+        if (signal.aborted) {
+          onLog('⛔ Read aborted.');
+          break;
+        }
+
         const { value, done } = await reader.read();
         if (done) break;
         if (value) {
@@ -67,7 +95,9 @@ const SerialConnection = ({ onData, onLog }) => {
         }
       }
     } catch (err) {
-      onLog(`⚠️ Serial read error: ${err.message}`);
+      if (err.name !== 'AbortError') {
+        onLog(`⚠️ Read loop error: ${err.message}`);
+      }
     }
   };
 
