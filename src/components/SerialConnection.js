@@ -1,4 +1,3 @@
-// SerialConnection.js
 import React, { useState, useEffect } from 'react';
 
 const SerialConnection = ({ onData, onLog }) => {
@@ -7,7 +6,7 @@ const SerialConnection = ({ onData, onLog }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    return () => disconnect();
+    return () => { disconnect(); };
   }, []);
 
   const connect = async () => {
@@ -21,11 +20,9 @@ const SerialConnection = ({ onData, onLog }) => {
       setPort(newPort);
       setReader(newReader);
       setIsConnected(true);
-      onLog('✅ Connected to serial port');
-
+      onLog('✅ Serial port connected.');
       readLoop(newReader);
     } catch (err) {
-      console.error('❌ Connection failed:', err);
       onLog(`❌ Connection error: ${err.message}`);
     }
   };
@@ -36,15 +33,12 @@ const SerialConnection = ({ onData, onLog }) => {
         await reader.cancel();
         await reader.releaseLock();
       }
-      if (port) {
-        await port.close();
-      }
-      setReader(null);
+      if (port) await port.close();
       setPort(null);
+      setReader(null);
       setIsConnected(false);
-      onLog('🔌 Disconnected from serial port');
+      onLog('🔌 Disconnected.');
     } catch (err) {
-      console.error('❌ Disconnection failed:', err);
       onLog(`❌ Disconnection error: ${err.message}`);
     }
   };
@@ -58,25 +52,22 @@ const SerialConnection = ({ onData, onLog }) => {
         if (value) {
           buffer += value;
           const lines = buffer.split('\n');
-          buffer = lines.pop(); // keep last incomplete line
-          for (const line of lines) {
+          buffer = lines.pop();
+          for (let line of lines) {
             const cleanLine = line.trim();
             if (cleanLine) {
               onLog(cleanLine);
               const parts = cleanLine.split(',').map(x => parseFloat(x));
-              if (parts.length >= 7 && parts.every(v => !isNaN(v))) {
+              if (parts.length === 7 && parts.every(x => !isNaN(x))) {
                 const [timestamp, ...values] = parts;
-                onData({ formattedTime: (timestamp).toFixed(2), values });
-              } else {
-                console.warn('⚠️ Malformed line skipped:', cleanLine);
+                onData({ formattedTime: timestamp.toFixed(2), values });
               }
             }
           }
         }
       }
     } catch (err) {
-      console.error('⚠️ Read loop error:', err);
-      onLog(`⚠️ Read error: ${err.message}`);
+      onLog(`⚠️ Serial read error: ${err.message}`);
     }
   };
 

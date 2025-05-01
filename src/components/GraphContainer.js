@@ -31,24 +31,37 @@ const GraphContainer = ({ dataPoints = [] }) => {
   if (!Array.isArray(dataPoints)) return null;
 
   const times = dataPoints.map(dp => dp.formattedTime || '');
-  const [gaugeRaw, gaugeDetrended, ecgFiltered, tilt, baseAtm, baseElev] = [0, 1, 2, 3, 4, 5];
+  const [gaugeRaw, ekgRaw, tilt, baseAtm, baseElev, absPressure] = [0, 1, 2, 3, 4, 5];
 
   const chartOptions = title => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: false,
+    animation: { duration: 0 },
+    interaction: {
+      mode: 'nearest',
+      axis: 'x',
+      intersect: false
+    },
+    elements: {
+      line: { tension: 0.4 },
+      point: { radius: 0 }
+    },
     scales: {
       x: {
         type: 'category',
         title: { display: true, text: 'Time (s)' },
-        ticks: { maxRotation: 0 }
+        ticks: { maxRotation: 0 },
+        grid: { display: false }
       },
       y: {
         title: {
           display: true,
-          text: title.includes('Pressure') ? 'Pressure (mbar)' : title.includes('Tilt') ? 'Tilt (°)' : title.includes('ECG') ? 'ECG (a.u.)' : 'Value'
+          text: title.includes('Pressure') ? 'Pressure (mbar)' :
+                title.includes('EKG') ? 'EKG (a.u.)' :
+                title.includes('Tilt') ? 'Tilt (°)' : 'Value'
         },
-        beginAtZero: false
+        beginAtZero: false,
+        grid: { display: false }
       }
     },
     plugins: {
@@ -63,8 +76,7 @@ const GraphContainer = ({ dataPoints = [] }) => {
     borderColor: color,
     backgroundColor: color,
     borderWidth: 2,
-    fill: false,
-    tension: 0.2
+    fill: false
   });
 
   return (
@@ -78,19 +90,10 @@ const GraphContainer = ({ dataPoints = [] }) => {
       </div>
 
       <div style={{ height: '320px', width: '100%' }}>
-        <h3>Gauge Pressure vs Time (Detrended)</h3>
+        <h3>Raw EKG vs Time</h3>
         <Line
-          ref={chartRef}
-          data={{ labels: times, datasets: [generateDataset('Gauge Pressure (Detrended)', 'blue', gaugeDetrended)] }}
-          options={chartOptions('Gauge Pressure vs Time (Detrended)')}
-        />
-      </div>
-
-      <div style={{ height: '320px', width: '100%' }}>
-        <h3>Filtered ECG vs Time</h3>
-        <Line
-          data={{ labels: times, datasets: [generateDataset('Filtered ECG', 'red', ecgFiltered)] }}
-          options={chartOptions('Filtered ECG vs Time')}
+          data={{ labels: times, datasets: [generateDataset('Raw EKG', 'red', ekgRaw)] }}
+          options={chartOptions('Raw EKG vs Time')}
         />
       </div>
 
@@ -115,6 +118,14 @@ const GraphContainer = ({ dataPoints = [] }) => {
         <Line
           data={{ labels: times, datasets: [generateDataset('Baseline Elevation (m)', 'purple', baseElev)] }}
           options={chartOptions('Baseline Elevation vs Time')}
+        />
+      </div>
+
+      <div style={{ height: '320px', width: '100%' }}>
+        <h3>Absolute Pressure vs Time</h3>
+        <Line
+          data={{ labels: times, datasets: [generateDataset('Absolute Pressure (mbar)', 'blue', absPressure)] }}
+          options={chartOptions('Absolute Pressure vs Time')}
         />
       </div>
     </div>
