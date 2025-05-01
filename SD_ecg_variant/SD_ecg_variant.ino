@@ -3,10 +3,10 @@
 #include <Arduino_LSM6DS3.h>
 #include <Wire.h>
 
-#define EKG_PIN             A0
+#define ECG_PIN             A0
 #define ECG_BUF_SIZE        100
 const unsigned long SAMPLE_INTERVAL_US = 1000UL;   // 1 ms → 1 kHz sampling
-const unsigned long LOG_INTERVAL_MS    = 1000UL;   // 1 s logging
+const unsigned long LOG_INTERVAL_MS    = 500UL;   // 1 s logging
 const float SEA_LEVEL_PRESSURE         = 1013.25f;
 
 MS_5803 atmosphericSensor(512), waterSensor(512);
@@ -33,7 +33,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
-  Serial.println("time_s,gaugeRaw,ekgRaw,tilt_deg,baseAtm,baseElev");
+  Serial.println("time_s,gaugeRaw,ecgRaw,tilt_deg,baseAtm,baseElev");
 
   Wire.begin();
   Wire.setClock(400000);
@@ -47,9 +47,9 @@ void setup() {
   if (!atmosphericSensor.initializeMS_5803(false)) while (1);
   if (!waterSensor.initializeMS_5803(false))       while (1);
 
-  Serial.println("SYSTEM: Waiting for EKG spike to start calibration...");
-  while (analogRead(EKG_PIN) < 500) delay(10);
-  Serial.println("SYSTEM: EKG spike detected. Starting 10s baseline calibration...");
+  Serial.println("SYSTEM: Waiting for ECG spike to start calibration...");
+  while (analogRead(ECG_PIN) < 500) delay(10);
+  Serial.println("SYSTEM: ECG spike detected. Starting 10s baseline calibration...");
 
   const unsigned long BASE_MS = 10000UL;
   const unsigned long INT_MS = 250UL;
@@ -59,7 +59,7 @@ void setup() {
   while (millis() - t0 < BASE_MS) {
     atmosphericSensor.readSensor();
     sumAtm += atmosphericSensor.pressure(); cntAtm++;
-    int v = analogRead(EKG_PIN);
+    int v = analogRead(ECG_PIN);
     sumECG += v; cntECG++;
     delay(INT_MS);
   }
@@ -73,7 +73,7 @@ void setup() {
   Serial.print(baselineAtmPressure, 2);
   Serial.print(" mbar, Elev = ");
   Serial.print(baselineElevation, 2);
-  Serial.print(" m, EKG_base = ");
+  Serial.print(" m, ECG_base = ");
   Serial.println(baselineECG, 1);
 
   for (uint8_t i = 0; i < ECG_BUF_SIZE; i++) {
@@ -94,9 +94,9 @@ void loop() {
   if (nowUs - lastSampleUs >= SAMPLE_INTERVAL_US) {
     lastSampleUs += SAMPLE_INTERVAL_US;
 
-    int rawEKG = analogRead(EKG_PIN);
-    ecgSum = ecgSum - ecgBuf[ecgBufIdx] + rawEKG;
-    ecgBuf[ecgBufIdx] = rawEKG;
+    int rawECG = analogRead(ECG_PIN);
+    ecgSum = ecgSum - ecgBuf[ecgBufIdx] + rawECG;
+    ecgBuf[ecgBufIdx] = rawECG;
     ecgBufIdx = (ecgBufIdx + 1) % ECG_BUF_SIZE;
     ecgFiltered = float(ecgSum) / ECG_BUF_SIZE;
 
@@ -119,7 +119,7 @@ void loop() {
 
       Serial.print(t_s,2);
       Serial.print(','); Serial.print(gaugeRaw,2);
-      Serial.print(','); Serial.print(rawEKG);
+      Serial.print(','); Serial.print(rawECG);
       Serial.print(','); Serial.print(tiltDeg,1);
       Serial.print(','); Serial.print(baselineAtmPressure,2);
       Serial.print(','); Serial.print(baselineElevation,2);

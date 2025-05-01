@@ -8,9 +8,7 @@ const SerialConnection = ({ onData, onLog }) => {
   const [abortController, setAbortController] = useState(null);
 
   useEffect(() => {
-    return () => {
-      disconnect();
-    };
+    return () => disconnect();
   }, []);
 
   const connect = async () => {
@@ -19,19 +17,17 @@ const SerialConnection = ({ onData, onLog }) => {
       await newPort.open({ baudRate: 9600 });
 
       const textDecoder = new TextDecoderStream();
-      const readableStreamClosed = newPort.readable.pipeTo(textDecoder.writable);
+      const readableClosed = newPort.readable.pipeTo(textDecoder.writable);
       const newReader = textDecoder.readable.getReader();
-
-      const abort = new AbortController();
 
       setPort(newPort);
       setReader(newReader);
-      setReadableStreamClosed(readableStreamClosed);
-      setAbortController(abort);
+      setReadableStreamClosed(readableClosed);
+      setAbortController(new AbortController());
       setIsConnected(true);
       onLog('✅ Serial port connected.');
 
-      readLoop(newReader, abort.signal);
+      readLoop(newReader);
     } catch (err) {
       onLog(`❌ Connection error: ${err.message}`);
     }
@@ -46,19 +42,16 @@ const SerialConnection = ({ onData, onLog }) => {
       }
 
       if (readableStreamClosed) {
-        await readableStreamClosed.catch(() => {
-          // Ignore the error from canceling the stream
-        });
+        await readableStreamClosed.catch(() => {});
       }
 
       if (port) {
         await port.close();
       }
 
-      setReader(null);
       setPort(null);
+      setReader(null);
       setReadableStreamClosed(null);
-      setAbortController(null);
       setIsConnected(false);
       onLog('🔌 Disconnected.');
     } catch (err) {
@@ -66,15 +59,10 @@ const SerialConnection = ({ onData, onLog }) => {
     }
   };
 
-  const readLoop = async (reader, signal) => {
+  const readLoop = async (reader) => {
     let buffer = '';
     try {
       while (true) {
-        if (signal.aborted) {
-          onLog('⛔ Read aborted.');
-          break;
-        }
-
         const { value, done } = await reader.read();
         if (done) break;
         if (value) {

@@ -30,7 +30,7 @@ const App = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Time (s)', 'Gauge Pressure (Raw)', 'Raw EKG', 'Tilt Angle (°)', 'Baseline Atm', 'Baseline Elevation', 'Absolute Pressure'];
+    const headers = ['Time (s)', 'Gauge Pressure (Raw)', 'Raw ECG', 'Tilt Angle (°)', 'Baseline Atm', 'Baseline Elevation', 'Absolute Pressure'];
     const csvContent = [headers.join(',')]
       .concat(dataPoints.map(dp => dp.values ? [dp.formattedTime, ...dp.values].join(',') : null).filter(Boolean))
       .join('\n');

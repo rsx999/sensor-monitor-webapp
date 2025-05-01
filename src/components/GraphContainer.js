@@ -27,16 +27,16 @@ ChartJS.register(
 );
 
 const GraphContainer = ({ dataPoints = [] }) => {
-  const chartRef = useRef();
-  if (!Array.isArray(dataPoints)) return null;
-
   const times = dataPoints.map(dp => dp.formattedTime || '');
-  const [gaugeRaw, ekgRaw, tilt, baseAtm, baseElev, absPressure] = [0, 1, 2, 3, 4, 5];
+  const [gaugeRaw, ecgRaw, tilt, baseAtm, baseElev, absPressure] = [0, 1, 2, 3, 4, 5];
 
   const chartOptions = title => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 0 },
+    animation: {
+      duration: 300,
+      easing: 'easeOutQuad'
+    },
     interaction: {
       mode: 'nearest',
       axis: 'x',
@@ -50,14 +50,13 @@ const GraphContainer = ({ dataPoints = [] }) => {
       x: {
         type: 'category',
         title: { display: true, text: 'Time (s)' },
-        ticks: { maxRotation: 0 },
         grid: { display: false }
       },
       y: {
         title: {
           display: true,
           text: title.includes('Pressure') ? 'Pressure (mbar)' :
-                title.includes('EKG') ? 'EKG (a.u.)' :
+                title.includes('ECG') ? 'ECG (a.u.)' :
                 title.includes('Tilt') ? 'Tilt (°)' : 'Value'
         },
         beginAtZero: false,
@@ -90,10 +89,10 @@ const GraphContainer = ({ dataPoints = [] }) => {
       </div>
 
       <div style={{ height: '320px', width: '100%' }}>
-        <h3>Raw EKG vs Time</h3>
+        <h3>Raw ECG vs Time</h3>
         <Line
-          data={{ labels: times, datasets: [generateDataset('Raw EKG', 'red', ekgRaw)] }}
-          options={chartOptions('Raw EKG vs Time')}
+          data={{ labels: times, datasets: [generateDataset('Raw ECG', 'red', ecgRaw)] }}
+          options={chartOptions('Raw ECG vs Time')}
         />
       </div>
 
